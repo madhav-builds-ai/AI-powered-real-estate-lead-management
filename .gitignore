@@ -1,0 +1,17 @@
+.env
+.env.*
+!.env.example
+
+credentials/
+secrets/
+*.key
+*.pem
+
+__pycache__/
+node_modules/
+venv/
+.venv/
+
+*.log
+.DS_Store
+Thumbs.db

@@ -1,0 +1,707 @@
+{
+  "name": "Real Estate - Reply Handler v4",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "reply-handler",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -592,
+        16
+      ],
+      "id": "6bc1dbee-21ac-4047-9d91-28f6de86b17f",
+      "name": "Webhook: Receive WhatsApp Reply",
+      "webhookId": "9acc258d-6cd8-4ede-ac0c-b9e82bff2fe0"
+    },
+    {
+      "parameters": {
+        "jsCode": "const from = $input.first().json.body.From;\nconst body = $input.first().json.body.Body;\n\nconst phone = from.replace('whatsapp:', '');\n\nreturn [{\n  json: {\n    phone: phone,\n    message: body\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -400,
+        16
+      ],
+      "id": "36f5217b-63e1-4760-b38d-a1daf90b8f59",
+      "name": "Code in JavaScript: Clean Phone Number"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1ypT1v1bqi-iuKRSM-K9WZKPCVgoG501_3c0Y7kfUWgU",
+          "mode": "list",
+          "cachedResultName": "Real Estate Pipeline v2",
+          "cachedResultUrl": "YOUR_GOOGLE_SHEET_ID"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "YOUR_GOOGLE_SHEET_ID"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Phone ",
+              "lookupValue": "={{ $('Code in JavaScript: Clean Phone Number').item.json.phone }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -208,
+        16
+      ],
+      "id": "7c0bf4b8-0564-4936-b6b4-41d6d82dbb31",
+      "name": "Get row(s) in sheet: Get Lead Profile",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "eek7zH9par28m1qB",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1ypT1v1bqi-iuKRSM-K9WZKPCVgoG501_3c0Y7kfUWgU",
+          "mode": "list",
+          "cachedResultName": "Real Estate Pipeline v2",
+          "cachedResultUrl": "YOUR_GOOGLE_SHEET_ID"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 208621296,
+          "mode": "list",
+          "cachedResultName": "Conversation History",
+          "cachedResultUrl": "YOUR_GOOGLE_SHEET_ID"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Phone",
+              "lookupValue": "={{ $('Code in JavaScript: Clean Phone Number').item.json.phone }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        208,
+        16
+      ],
+      "id": "7798933f-2515-4346-b85d-b87b8ecc9f52",
+      "name": "Get row(s) in sheet1: Get Conversation History",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "eek7zH9par28m1qB",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const lead = $('Get row(s) in sheet: Get Lead Profile').item.json;\nconst history = $('Get row(s) in sheet1: Get Conversation History').item.json;\nconst incoming = $('Code in JavaScript: Clean Phone Number').item.json;\n\nconst conversationHistory = history?.['Conversation JSON']\n  ? JSON.parse(history['Conversation JSON'])\n  : [];\n\nreturn [{\n  json: {\n    lead_name: `${lead['First Name'] || ''} ${lead['Last Name'] || ''}`.trim(),\n    property_interest: lead['Property Interest'] || '',\n    form_message: lead['Message '] || '',\n    status: lead['Status '] || '',\n    phone: lead['Phone '] || '',\n    conversation_history: conversationHistory,\n    incoming_message: incoming.message || ''\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        384,
+        16
+      ],
+      "id": "81f118d3-1c40-42e4-81ae-fd095e305db1",
+      "name": "Code in JavaScript1: Build GPT Context"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "responses": {
+          "values": [
+            {
+              "role": "system",
+              "content": "You are a professional real estate assistant working on behalf of an agent. Your ONLY job is to have a natural conversation with a lead and qualify them.\n\nSTRICT RULES - NEVER BREAK THESE:\n1. NEVER invent or assume any property details (price, size, location, availability, amenities)\n2. NEVER promise viewing times - only say \"I will check and confirm\"\n3. NEVER mention competitor properties or agents\n4. ONLY use information explicitly provided to you in the lead profile below\n5. If asked anything you don't know, including pricing, budget, or availability - say \"Let me check with my agent and get back to you\"\n6. Keep every reply under 160 characters\n7. Ask only ONE question per message\n8. Sound human and natural - never robotic or salesy\n9. Never use emojis unless the lead used them first\n10. Never make up budgets, timelines or any numbers\n11. Never upgrade lead status unless their message clearly meets the classification criteria above\n12. If the lead directly asks whether you are an AI, a bot, or not a real person — always say: \"I'm an automated assistant helping the agent. A real agent will follow up with you shortly.\" Never deny being automated.\n13. If the lead says they will reach out when ready — reply once acknowledging this, update status to WARM, and do not send any further follow ups until they message again.\n14. Always reply in the same language the lead used in their latest message. If they write in Telugu, reply in Telugu. If they write in Hindi, reply in Hindi. Match their language exactly.\n15. Never classify as HOT based on a one word reply. HOT requires a clear and explicit statement of intent to visit or proceed.\n\nYOUR GOAL:\nMove the conversation toward booking a viewing or a call with the agent. Qualify the lead by understanding their timeline, budget and seriousness.\n\nCLASSIFICATION RULES:\n- HOT: Lead explicitly asks to book a viewing, requests a call, asks for agent contact, or uses clear phrases like \"I want to visit\", \"can we meet\", \"I'm ready to proceed\". A one word reply like \"ya\" or \"yes\" to a general question is NOT hot.\n- WARM: Lead has responded more than once AND has shared a specific property preference or shown genuine interest\n- NEW: Lead just replied for the first time with a general question — do not upgrade status yet\n- DEAD:  Lead explicitly says stop, unsubscribe, not interested, remove me, or uses clear opt-out language. \"Not ready yet\" and \"I'll reach out when I'm ready\" are NOT dead — classify as WARM and stop messaging until they reply again.\n\nIMPORTANT: Only upgrade status if the lead's behavior clearly meets the criteria. When in doubt, keep the current status unchanged. Never downgrade a HOT lead.\nRESPOND ONLY WITH THIS EXACT JSON FORMAT - NO MARKDOWN, NO EXTRA TEXT:\n{\"reply\": \"your message here\", \"classification\": \"HOT|WARM|DEAD\", \"reason\": \"one line explanation\"}"
+            },
+            {
+              "content": "=Lead Name: {{ $json.lead_name }}\nProperty They Enquired About: {{ $json.property_interest }}\nTheir Original Form Message: {{ $json.form_message }}\nCurrent Status: {{ $json.status }}\n\nConversation So Far:\n{{ JSON.stringify($json.conversation_history) }}\n\nTheir Latest Message:\n{{ $json.incoming_message }}\n\nNow reply to their latest message naturally and classify them."
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
+      "position": [
+        560,
+        16
+      ],
+      "id": "b5099e1a-5a76-4a3e-92c6-2985b6d083bf",
+      "name": "Message a model1"
+    },
+    {
+      "parameters": {
+        "from": "+14155238886",
+        "to": "={{ $json.phone }}",
+        "toWhatsapp": true,
+        "message": "={{ $json.reply }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.twilio",
+      "typeVersion": 1,
+      "position": [
+        -176,
+        304
+      ],
+      "id": "cfdc8bd6-01e1-4cf6-9db8-df63d0c3f51c",
+      "name": "Send an SMS/MMS/WhatsApp message",
+      "credentials": {
+        "twilioApi": {
+          "id": "99VffUHDtHsgAkMU",
+          "name": "Twilio account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const output = $input.first().json;\nconst text = output.output[0].content[0].text;\nconst parsed = JSON.parse(text);\n\nreturn [{\n  json: {\n    reply: parsed.reply,\n    classification: parsed.classification,\n    reason: parsed.reason,\n    phone: $('Code in JavaScript: Clean Phone Number').item.json.phone\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        912,
+        16
+      ],
+      "id": "6ead1b0e-e251-4a3a-8411-6351e1e9a366",
+      "name": "Code in JavaScript: Parse GPT Response"
+    },
+    {
+      "parameters": {
+        "jsCode": "const existing = $('Get row(s) in sheet1: Get Conversation History').item.json?.['Conversation JSON']\n  ? JSON.parse($('Get row(s) in sheet1: Get Conversation History').item.json['Conversation JSON'])\n  : [];\n\nconst incomingMessage = $('Code in JavaScript: Clean Phone Number').item.json.message;\nconst aiReply = $('Code in JavaScript: Parse GPT Response').item.json.reply;\n\nconst updated = [\n  ...existing,\n  { \"role\": \"user\", \"content\": incomingMessage },\n  { \"role\": \"assistant\", \"content\": aiReply }\n];\n\nreturn [{\n  json: {\n    phone: $('Code in JavaScript: Clean Phone Number').item.json.phone,\n    conversation_json: JSON.stringify(updated)\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        64,
+        304
+      ],
+      "id": "3bbb14c1-925d-430c-a4d1-031dabf58bfd",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1ypT1v1bqi-iuKRSM-K9WZKPCVgoG501_3c0Y7kfUWgU",
+          "mode": "list",
+          "cachedResultName": "Real Estate Pipeline v2",
+          "cachedResultUrl": "YOUR_GOOGLE_SHEET_ID"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 208621296,
+          "mode": "list",
+          "cachedResultName": "Conversation History",
+          "cachedResultUrl": "YOUR_GOOGLE_SHEET_ID"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Phone": "={{ $json.phone }}",
+            "Conversation JSON": "={{ $json.conversation_json }}"
+          },
+          "matchingColumns": [
+            "Phone"
+          ],
+          "schema": [
+            {
+              "id": "Phone",
+              "displayName": "Phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Conversation JSON",
+              "displayName": "Conversation JSON",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        304,
+        304
+      ],
+      "id": "a26fe015-d43f-4ee1-92b8-02a398d087d2",
+      "name": "Update row in sheet: Update Conversation History",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "eek7zH9par28m1qB",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1ypT1v1bqi-iuKRSM-K9WZKPCVgoG501_3c0Y7kfUWgU",
+          "mode": "list",
+          "cachedResultName": "Real Estate Pipeline v2",
+          "cachedResultUrl": "YOUR_GOOGLE_SHEET_ID"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "YOUR_GOOGLE_SHEET_ID"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Phone ": "={{ $json.Phone }}",
+            "Status ": "={{ $('Code in JavaScript: Parse GPT Response').item.json.classification.toLowerCase() }}"
+          },
+          "matchingColumns": [
+            "Phone "
+          ],
+          "schema": [
+            {
+              "id": "First Name",
+              "displayName": "First Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": " Last Name ",
+              "displayName": " Last Name ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Phone ",
+              "displayName": "Phone ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Email ",
+              "displayName": "Email ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Property Interest",
+              "displayName": "Property Interest",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Source ",
+              "displayName": "Source ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Message ",
+              "displayName": "Message ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status ",
+              "displayName": "Status ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Welcome Sent",
+              "displayName": "Welcome Sent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Last Message Sent At",
+              "displayName": "Last Message Sent At",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Follow Up 1 Sent ",
+              "displayName": "Follow Up 1 Sent ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": " Follow Up 2 Sent",
+              "displayName": " Follow Up 2 Sent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        544,
+        304
+      ],
+      "id": "606ab2cd-397a-4cba-80ed-21179598b550",
+      "name": "Update row in sheet: Update Lead Status",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "eek7zH9par28m1qB",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "ea7ff9b9-48ef-4d6d-92d5-75641a3adbd1",
+              "leftValue": "={{ $('Code in JavaScript: Parse GPT Response').item.json.classification }}",
+              "rightValue": "HOT",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        800,
+        304
+      ],
+      "id": "3a0bd1cf-75ae-418e-a3dd-e4711c8d9f43",
+      "name": "If: Check If HOT"
+    },
+    {
+      "parameters": {
+        "from": "+14155238886",
+        "to": "={{ $json['Phone '] }}",
+        "toWhatsapp": true,
+        "message": "={{ '🔥 HOT LEAD ALERT!\\n\\nName: ' + $('Code in JavaScript1: Build GPT Context').item.json.lead_name + '\\nPhone: ' + $('Code in JavaScript: Clean Phone Number').item.json.phone + '\\nInterested in: ' + $('Code in JavaScript1: Build GPT Context').item.json.property_interest + '\\nLatest message: ' + $('Code in JavaScript: Clean Phone Number').item.json.message + '\\n\\nCall them NOW!' }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.twilio",
+      "typeVersion": 1,
+      "position": [
+        1072,
+        288
+      ],
+      "id": "8206082a-ea84-4c79-8553-980f6736fe4c",
+      "name": "Send an SMS/MMS/WhatsApp message1: Alert Agent"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "eafaf2d6-f9cc-43c0-943c-6d31962b4681",
+              "leftValue": "={{ $('Get row(s) in sheet: Get Lead Profile').item.json['Status '] }}",
+              "rightValue": "dead",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        0,
+        0
+      ],
+      "id": "5b303d18-4f9f-41c2-830e-068d8de81390",
+      "name": "If: Check If Dead"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook: Receive WhatsApp Reply": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript: Clean Phone Number",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript: Clean Phone Number": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet: Get Lead Profile",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet: Get Lead Profile": {
+      "main": [
+        [
+          {
+            "node": "If: Check If Dead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet1: Get Conversation History": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1: Build GPT Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1: Build GPT Context": {
+      "main": [
+        [
+          {
+            "node": "Message a model1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model1": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript: Parse GPT Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript: Parse GPT Response": {
+      "main": [
+        [
+          {
+            "node": "Send an SMS/MMS/WhatsApp message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send an SMS/MMS/WhatsApp message": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Update row in sheet: Update Conversation History",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update row in sheet: Update Conversation History": {
+      "main": [
+        [
+          {
+            "node": "Update row in sheet: Update Lead Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update row in sheet: Update Lead Status": {
+      "main": [
+        [
+          {
+            "node": "If: Check If HOT",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If: Check If HOT": {
+      "main": [
+        [
+          {
+            "node": "Send an SMS/MMS/WhatsApp message1: Alert Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If: Check If Dead": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Get row(s) in sheet1: Get Conversation History",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "9079b83c-42b6-40f2-8f6b-3eaee850f427",
+  "meta": {
+    "instanceId": "63eda73f823f318e9ffd696d33b3f8443d863f39f2d9de0d48ec5cbacc7b39cc"
+  },
+  "id": "jI3W63TGrS0xGh1u",
+  "tags": []
+}

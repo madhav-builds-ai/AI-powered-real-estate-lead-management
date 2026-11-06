@@ -1,0 +1,623 @@
+{
+  "name": "Lead Capture v4",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "d858a811-5b93-4015-8d54-b5012da92a5d",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "cffc3435-0e31-4cd0-ae65-674451d30fb7",
+      "name": "Webhook",
+      "webhookId": "d858a811-5b93-4015-8d54-b5012da92a5d"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1ypT1v1bqi-iuKRSM-K9WZKPCVgoG501_3c0Y7kfUWgU",
+          "mode": "list",
+          "cachedResultName": "Real Estate Pipeline v2",
+          "cachedResultUrl": "YOUR_GOOGLE_SHEET_ID"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "YOUR_GOOGLE_SHEET_ID"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "First Name": "={{ $('Webhook').item.json.body['First Name'] }}",
+            " Last Name ": "={{ $('Webhook').item.json.body['Last Name'] }}",
+            "Phone ": "='{{ $('Webhook').item.json.body.Phone }}",
+            "Email ": "={{ $('Webhook').item.json.body.Email }}",
+            "Property Interest": "={{ $('Webhook').item.json.body['Property Interest'] }}",
+            "Source ": "={{ $('Webhook').item.json.body.Source }}",
+            "Message ": "={{ $('Webhook').item.json.body.Message }}",
+            "Status ": "new",
+            "Date": "={{ $now.toFormat('dd/MM/yyyy HH:mm') }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "First Name",
+              "displayName": "First Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": " Last Name ",
+              "displayName": " Last Name ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Phone ",
+              "displayName": "Phone ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email ",
+              "displayName": "Email ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Property Interest",
+              "displayName": "Property Interest",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Source ",
+              "displayName": "Source ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Message ",
+              "displayName": "Message ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status ",
+              "displayName": "Status ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Welcome Sent",
+              "displayName": "Welcome Sent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Last Message Sent At",
+              "displayName": "Last Message Sent At",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Follow Up 1 Sent ",
+              "displayName": "Follow Up 1 Sent ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": " Follow Up 2 Sent",
+              "displayName": " Follow Up 2 Sent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        624,
+        0
+      ],
+      "id": "b835e2c0-6f22-4439-9b4d-863ff71afeed",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "eek7zH9par28m1qB",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1ypT1v1bqi-iuKRSM-K9WZKPCVgoG501_3c0Y7kfUWgU",
+          "mode": "list",
+          "cachedResultName": "Real Estate Pipeline v2",
+          "cachedResultUrl": "YOUR_GOOGLE_SHEET_ID"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "YOUR_GOOGLE_SHEET_ID"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Email ",
+              "lookupValue": "={{ $json.body.Email }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        208,
+        0
+      ],
+      "id": "a6874888-5e25-4e5f-aee1-f349792cb53c",
+      "name": "Get row(s) in sheet",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "eek7zH9par28m1qB",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst hasMatch = items.some(item => item.json.row_number !== undefined);\n\nif (hasMatch) {\n  // Duplicate found - return empty to stop workflow\n  return [];\n} else {\n  // No duplicate - pass webhook data through\n  return [{ json: $('Webhook').item.json }];\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        416,
+        0
+      ],
+      "id": "84a32118-accd-4dd0-815a-abe1d7935e9e",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "from": "+14155238886",
+        "to": "={{ $('Webhook').item.json.body.Phone }}",
+        "toWhatsapp": true,
+        "message": "=Hi {{ $('Webhook').item.json.body['First Name'] }}! 👋 \nThanks for your interest in {{ $('Webhook').item.json.body['Property Interest'] }}. I'm here to help you find the right fit. Are you looking to buy or rent?\n\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.twilio",
+      "typeVersion": 1,
+      "position": [
+        1088,
+        0
+      ],
+      "id": "381ce2ec-9989-4521-94a6-084fc0f90038",
+      "name": "Send an SMS/MMS/WhatsApp message",
+      "credentials": {
+        "twilioApi": {
+          "id": "99VffUHDtHsgAkMU",
+          "name": "Twilio account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1ypT1v1bqi-iuKRSM-K9WZKPCVgoG501_3c0Y7kfUWgU",
+          "mode": "list",
+          "cachedResultName": "Real Estate Pipeline v2",
+          "cachedResultUrl": "YOUR_GOOGLE_SHEET_ID"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "YOUR_GOOGLE_SHEET_ID"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Email ": "={{ $('Webhook').item.json.body.Email }}",
+            "Welcome Sent": "yes",
+            "Last Message Sent At": "={{ $now.toFormat('dd/MM/yyyy HH:mm') }}",
+            "Follow Up Stage": "'1"
+          },
+          "matchingColumns": [
+            "Email "
+          ],
+          "schema": [
+            {
+              "id": "First Name",
+              "displayName": "First Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": " Last Name ",
+              "displayName": " Last Name ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Phone ",
+              "displayName": "Phone ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Email ",
+              "displayName": "Email ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Property Interest",
+              "displayName": "Property Interest",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Source ",
+              "displayName": "Source ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Message ",
+              "displayName": "Message ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Status ",
+              "displayName": "Status ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Welcome Sent",
+              "displayName": "Welcome Sent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Last Message Sent At",
+              "displayName": "Last Message Sent At",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Follow Up 1 Sent ",
+              "displayName": "Follow Up 1 Sent ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": " Follow Up 2 Sent",
+              "displayName": " Follow Up 2 Sent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Next Follow Up At",
+              "displayName": "Next Follow Up At",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Follow Up Stage",
+              "displayName": "Follow Up Stage",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1264,
+        0
+      ],
+      "id": "33b4a624-1de6-431a-8997-258eb1e7484e",
+      "name": "Update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "eek7zH9par28m1qB",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1ypT1v1bqi-iuKRSM-K9WZKPCVgoG501_3c0Y7kfUWgU",
+          "mode": "list",
+          "cachedResultName": "Real Estate Pipeline v2",
+          "cachedResultUrl": "YOUR_GOOGLE_SHEET_ID"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 208621296,
+          "mode": "list",
+          "cachedResultName": "Conversation History",
+          "cachedResultUrl": "YOUR_GOOGLE_SHEET_ID"
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Phone": "='{{ $('Webhook').item.json.body.Phone }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Phone",
+              "displayName": "Phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Conversation JSON",
+              "displayName": "Conversation JSON",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        864,
+        0
+      ],
+      "id": "978fd8cd-57b2-42f0-b3a5-38379a6e8460",
+      "name": "Append row in sheet1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "eek7zH9par28m1qB",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send an SMS/MMS/WhatsApp message": {
+      "main": [
+        [
+          {
+            "node": "Update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet1": {
+      "main": [
+        [
+          {
+            "node": "Send an SMS/MMS/WhatsApp message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "053589b6-e5a7-4f95-9143-14ff5c0ff464",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "63eda73f823f318e9ffd696d33b3f8443d863f39f2d9de0d48ec5cbacc7b39cc"
+  },
+  "id": "HwAAYCaGfuUunWWA",
+  "tags": []
+}

@@ -1,0 +1,970 @@
+{
+  "name": "Follow-Up Engine v4",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -864,
+        128
+      ],
+      "id": "e41de02d-3ff4-4433-adfa-ac64d7a63b5b",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1ypT1v1bqi-iuKRSM-K9WZKPCVgoG501_3c0Y7kfUWgU",
+          "mode": "list",
+          "cachedResultName": "Real Estate Pipeline v2",
+          "cachedResultUrl": "YOUR_GOOGLE_SHEET_ID"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "YOUR_GOOGLE_SHEET_ID"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -656,
+        128
+      ],
+      "id": "696d6674-e000-41c5-b163-7db9b6211e3b",
+      "name": "Get row(s) in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "eek7zH9par28m1qB",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const now = new Date();\n\nconst filtered = items.filter(item => {\n  const status = item.json['Status ']?.toLowerCase().trim();\n  const nextFollowUp = item.json['Next Follow Up At'];\n  const stage = item.json['Follow Up Stage'];\n\n  // Skip dead/cold/hot leads — FIRST check\n  if (['dead', 'cold', 'hot'].includes(status)) return false;\n\n  // If stage is empty, it's a new lead — include it\n  if (!stage) return true;\n\n  // If stage is empty or 1, it's early stage — include it\n  if (!stage || stage === '1') return true;\n\n  // Skip if no follow up date set\n  if (!nextFollowUp) return false;\n\n  // Skip if not due yet\n  if (new Date(nextFollowUp) > now) return false;\n\n  return true;\n});\n\nreturn filtered.map(item => ({ json: item.json }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -448,
+        128
+      ],
+      "id": "031266b8-596d-4295-941f-a9e04d465dff",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "3cb63e2b-a6cf-44d4-830e-016ff5f3a03c",
+              "leftValue": "={{ $json['Follow Up Stage'] }}",
+              "rightValue": "1",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "6e0e4cce-5c7e-4dfe-bd53-794ea41b14e1",
+              "leftValue": "={{ $json['Follow Up Stage'] }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "empty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -240,
+        128
+      ],
+      "id": "ae5113a0-8de1-4734-9b7d-36d1d7c49552",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "from": "+14155238886",
+        "to": "={{ $json['Phone '] }}",
+        "toWhatsapp": true,
+        "message": "=Hi {{ $json['First Name'] }}, just following up on your enquiry. Are you still looking for a property? Happy to help anytime.",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.twilio",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "fca4af38-c2c2-4b37-a1da-20b524060ab1",
+      "name": "Send an SMS/MMS/WhatsApp message",
+      "credentials": {
+        "twilioApi": {
+          "id": "99VffUHDtHsgAkMU",
+          "name": "Twilio account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1ypT1v1bqi-iuKRSM-K9WZKPCVgoG501_3c0Y7kfUWgU",
+          "mode": "list",
+          "cachedResultName": "Real Estate Pipeline v2",
+          "cachedResultUrl": "YOUR_GOOGLE_SHEET_ID"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "YOUR_GOOGLE_SHEET_ID"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Email ": "={{ $('If').item.json['Email '] }}",
+            "Follow Up Stage": "'2",
+            "Next Follow Up At": "={{ new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString() }}",
+            "Follow Up 1 Sent ": "yes",
+            "Last Message Sent At": "={{ new Date().toISOString() }}"
+          },
+          "matchingColumns": [
+            "Email "
+          ],
+          "schema": [
+            {
+              "id": "First Name",
+              "displayName": "First Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": " Last Name ",
+              "displayName": " Last Name ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Phone ",
+              "displayName": "Phone ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email ",
+              "displayName": "Email ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Property Interest",
+              "displayName": "Property Interest",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Source ",
+              "displayName": "Source ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Message ",
+              "displayName": "Message ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status ",
+              "displayName": "Status ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Welcome Sent",
+              "displayName": "Welcome Sent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Last Message Sent At",
+              "displayName": "Last Message Sent At",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Follow Up 1 Sent ",
+              "displayName": "Follow Up 1 Sent ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": " Follow Up 2 Sent",
+              "displayName": " Follow Up 2 Sent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Next Follow Up At",
+              "displayName": "Next Follow Up At",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Follow Up Stage",
+              "displayName": "Follow Up Stage",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        256,
+        0
+      ],
+      "id": "56fe379e-5aa4-4e16-8804-b2e9796aa63d",
+      "name": "Update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "eek7zH9par28m1qB",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "d86c9a26-a337-4dbc-babc-cb9c2ca4307b",
+              "leftValue": "={{ $('Code in JavaScript').item.json['Follow Up Stage'] }}",
+              "rightValue": "2",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -32,
+        224
+      ],
+      "id": "5eab5348-2845-4903-9c7b-4445eb02d85d",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "from": "+14155238886",
+        "to": "={{ $json['Phone '] }}",
+        "toWhatsapp": true,
+        "message": "=hey {{ $json['First Name'] }}, following up once more. We have some great options that might match what you're looking for. Would you like to know more?",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.twilio",
+      "typeVersion": 1,
+      "position": [
+        256,
+        208
+      ],
+      "id": "503c23d8-9194-4d1f-ab79-e8830adb5411",
+      "name": "Send an SMS/MMS/WhatsApp message1",
+      "credentials": {
+        "twilioApi": {
+          "id": "99VffUHDtHsgAkMU",
+          "name": "Twilio account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1ypT1v1bqi-iuKRSM-K9WZKPCVgoG501_3c0Y7kfUWgU",
+          "mode": "list",
+          "cachedResultName": "Real Estate Pipeline v2",
+          "cachedResultUrl": "YOUR_GOOGLE_SHEET_ID"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "YOUR_GOOGLE_SHEET_ID"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Email ": "={{ $('If1').item.json['Email '] }}",
+            "Follow Up Stage": "'3",
+            "Next Follow Up At": "={{ new Date(Date.now() + 1 * 60 * 1000).toISOString() }}",
+            " Follow Up 2 Sent": "yes",
+            "Last Message Sent At": "={{ new Date().toISOString() }}"
+          },
+          "matchingColumns": [
+            "Email "
+          ],
+          "schema": [
+            {
+              "id": "First Name",
+              "displayName": "First Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": " Last Name ",
+              "displayName": " Last Name ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Phone ",
+              "displayName": "Phone ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email ",
+              "displayName": "Email ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Property Interest",
+              "displayName": "Property Interest",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Source ",
+              "displayName": "Source ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Message ",
+              "displayName": "Message ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status ",
+              "displayName": "Status ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Welcome Sent",
+              "displayName": "Welcome Sent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Last Message Sent At",
+              "displayName": "Last Message Sent At",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Follow Up 1 Sent ",
+              "displayName": "Follow Up 1 Sent ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": " Follow Up 2 Sent",
+              "displayName": " Follow Up 2 Sent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Next Follow Up At",
+              "displayName": "Next Follow Up At",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Follow Up Stage",
+              "displayName": "Follow Up Stage",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        464,
+        208
+      ],
+      "id": "a4c343c7-973d-4cd7-a2ab-198cc91b6374",
+      "name": "Update row in sheet1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "eek7zH9par28m1qB",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "1a884113-62eb-46d6-9aec-b231a6cdcb62",
+              "leftValue": "={{ $('Code in JavaScript').item.json['Follow Up Stage'] }}",
+              "rightValue": "3",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "dc0f87d6-45c9-4637-a1dd-95c141531e4e",
+              "leftValue": "={{ $json['Status '] }}",
+              "rightValue": "cold",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        176,
+        448
+      ],
+      "id": "a5b678e5-b44e-4b1f-88f7-abbfaffd095b",
+      "name": "If2"
+    },
+    {
+      "parameters": {
+        "from": "+14155238886",
+        "to": "={{ $json['Phone '] }}",
+        "toWhatsapp": true,
+        "message": "=hey {{ $json['First Name'] }}, This is my final follow-up. If you're still interested, just reply to this message and I'll be happy to assist you.",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.twilio",
+      "typeVersion": 1,
+      "position": [
+        464,
+        432
+      ],
+      "id": "4e6681b7-27bc-43eb-a2b2-0b4df4672821",
+      "name": "Send an SMS/MMS/WhatsApp message2"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1ypT1v1bqi-iuKRSM-K9WZKPCVgoG501_3c0Y7kfUWgU",
+          "mode": "list",
+          "cachedResultName": "Real Estate Pipeline v2",
+          "cachedResultUrl": "YOUR_GOOGLE_SHEET_ID"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "YOUR_GOOGLE_SHEET_ID"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Email ": "={{ $('If2').item.json['Email '] }}",
+            "Status ": "cold",
+            "Last Message Sent At": "={{ new Date().toISOString() }}"
+          },
+          "matchingColumns": [
+            "Email "
+          ],
+          "schema": [
+            {
+              "id": "First Name",
+              "displayName": "First Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": " Last Name ",
+              "displayName": " Last Name ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Phone ",
+              "displayName": "Phone ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email ",
+              "displayName": "Email ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Property Interest",
+              "displayName": "Property Interest",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Source ",
+              "displayName": "Source ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Message ",
+              "displayName": "Message ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status ",
+              "displayName": "Status ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Welcome Sent",
+              "displayName": "Welcome Sent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Last Message Sent At",
+              "displayName": "Last Message Sent At",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Follow Up 1 Sent ",
+              "displayName": "Follow Up 1 Sent ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": " Follow Up 2 Sent",
+              "displayName": " Follow Up 2 Sent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Next Follow Up At",
+              "displayName": "Next Follow Up At",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Follow Up Stage",
+              "displayName": "Follow Up Stage",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        672,
+        432
+      ],
+      "id": "27248fc8-e09d-4de6-b283-e7f8beaf5139",
+      "name": "Update row in sheet2",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "eek7zH9par28m1qB",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Send an SMS/MMS/WhatsApp message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send an SMS/MMS/WhatsApp message": {
+      "main": [
+        [
+          {
+            "node": "Update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Send an SMS/MMS/WhatsApp message1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "If2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send an SMS/MMS/WhatsApp message1": {
+      "main": [
+        [
+          {
+            "node": "Update row in sheet1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If2": {
+      "main": [
+        [
+          {
+            "node": "Send an SMS/MMS/WhatsApp message2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send an SMS/MMS/WhatsApp message2": {
+      "main": [
+        [
+          {
+            "node": "Update row in sheet2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "298afdae-ed68-43da-9b84-932db93e2170",
+  "meta": {
+    "instanceId": "63eda73f823f318e9ffd696d33b3f8443d863f39f2d9de0d48ec5cbacc7b39cc"
+  },
+  "id": "g42DGJlSvqbWqgxV",
+  "tags": []
+}
